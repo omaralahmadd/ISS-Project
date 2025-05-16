@@ -1,7 +1,8 @@
-
+#!/usr/bin/env python3
 
 def detect_anomalies(open_ports):
     issues = []
+
     if 23 in open_ports:
         issues.append("⚠️ Telnet is open (port 23)")
     if 21 in open_ports:
@@ -13,29 +14,37 @@ def detect_anomalies(open_ports):
     return issues
 
 def estimate_risk(issues):
-    if any("Telnet" in issue or "UPnP" in issue for issue in issues):
-        return "High"
-    elif issues:
+
+    for issue in issues:
+        if "Telnet" in issue or "UPnP" in issue:
+            return "High"
+
+    if len(issues) > 0:
         return "Medium"
-    else:
-        return "Low"
+
+    return "Low"
 
 def main():
     print("Simulated IoT Vulnerability Scanner (No Nmap Needed)")
     ip = input("Enter the device IP address: ").strip()
-    ports_input = input("Enter open ports separated by commas (e.g., 21,80,443): ").strip()
+    ports_input = input(
+        "Enter open ports separated by commas (e.g., 21,80,443): "
+    ).strip()
 
     try:
-        open_ports = [int(p.strip()) for p in ports_input.split(",") if p.strip().isdigit()]
-    except ValueError:
+        open_ports = []
+        for p in ports_input.split(","):
+            p = p.strip()
+            if p.isdigit():
+                open_ports.append(int(p))
+    except Exception:
         print("Invalid input. Please enter numbers separated by commas.")
         return
 
-    print(f"\nScanning {ip}...")
+    print(f"\nScanning {ip}...\n")
+    print("Open Ports:", open_ports)
 
-    print(f"\nOpen Ports: {open_ports}")
     issues = detect_anomalies(open_ports)
-
     if issues:
         print("\nSecurity Warnings:")
         for issue in issues:

@@ -1,8 +1,7 @@
-
+#!/usr/bin/env python3
 import subprocess
 import re
 
-# This function checks which ports are risky and returns simple warnings
 def detect_anomalies(open_ports):
     issues = []
     if 23 in open_ports:
@@ -15,45 +14,44 @@ def detect_anomalies(open_ports):
         issues.append("⚠️ UPnP (port 52869) is exposed")
     return issues
 
-# This function gives a simple risk level based on what was found
 def estimate_risk(issues):
-    if any("Telnet" in issue or "UPnP" in issue for issue in issues):
-        return "High"
-    elif issues:
+    for issue in issues:
+        if "Telnet" in issue or "UPnP" in issue:
+            return "High"
+    if len(issues) > 0:
         return "Medium"
-    else:
-        return "Low"
+    return "Low"
 
-# This function runs an nmap scan on the selected IP
 def scan_ip(ip):
     try:
-        # Run nmap with service detection and skip ping
-        result = subprocess.run(["/usr/local/bin/nmap", "-sV", "-Pn", ip], capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            ["nmap", "-sV", "-Pn", ip],
+            capture_output=True,
+            text=True,
+            check=True
+        )
         return result.stdout
     except Exception as e:
         print("There was a problem running nmap:", e)
         return None
 
-# This function looks through the nmap output and finds open ports
 def get_open_ports(nmap_output):
     ports = []
     for line in nmap_output.splitlines():
+        # Lines like "80/tcp  open  http"
         match = re.match(r"^(\d+)/tcp\s+open", line)
         if match:
             ports.append(int(match.group(1)))
     return ports
 
-# This is the main function that connects everything
 def main():
     print("Simple IoT Vulnerability Scanner")
     ip = input("Enter the IP address to scan: ").strip()
 
-    # Run the scan
     output = scan_ip(ip)
     if not output:
         return
 
-    # Analyze results
     open_ports = get_open_ports(output)
     print("\nOpen Ports:", open_ports)
 
